@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study session tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+    <h1>STUDY SESSION TRACKER</h1>
+    <input type="text" id="subject" placeholder="what are you studiying?">
+    <button id="startBtn">Start</button>
+    <button id="stopBtn">Stop</button>
+    <button id="resetBtn">Reset</button>
+    <h2 id="timerDisplay">00:00</h2>
+    <h3>Sessions</h3>
+    <p  id="totalDisplay">total:00:00</p>
+    <ul id="sessionList"></ul>
+    </div>
+    <script>
+    const subjectinput= document.getElementById("subject");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn  = document.getElementById("stopBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const timerDisplay = document.getElementById("timerDisplay");
+    const totalDisplay = document.getElementById("totalDisplay");
+    const sessionList = document.getElementById("sessionList");
+    
+    let seconds = 0
+    let timerid = null;
+    let sessions=[]
+
+    function formatTime(totalSeconds){
+        const mins = Math.floor(totalSeconds/60);
+        const secs = totalSeconds % 60;
+        return String(mins).padStart(2,"0")+":"+String(secs).padStart(2,"0");
+    }
+
+    function saveSessions(){
+        localStorage.setItem("sessions",JSON.stringify(sessions))
+    }
+
+    function updateTotal(){
+        let total=0;
+        for (let i=0; i<sessions.length;i++){
+            total=total+sessions[i].time;
+        }
+        totalDisplay.textContent= "total:" + formatTime(total);
+    }
+
+    startBtn.addEventListener("click",function(){
+        if(timerid!==null){
+            return;
+        }
+        timerid = setInterval(function(){
+            seconds = seconds+1;
+            timerDisplay.textContent = formatTime(seconds);
+        },1000);
+        });
+
+    stopBtn.addEventListener("click", function(){
+        if(timerid===null){
+            return;
+        }
+        clearInterval(timerid);
+        timerid = null;
+
+        const li = document.createElement("li");
+        li.textContent=subjectinput.value + "-" + formatTime(seconds);
+        sessionList.appendChild(li);
+
+        sessions.push({
+            subject:subjectinput.value,
+            time:seconds
+        });
+        saveSessions();
+        updateTotal();
+
+        seconds=0;
+        timerDisplay.textContent=formatTime(seconds);
+        });
+
+        resetBtn.addEventListener("click",function(){
+            clearInterval(timerid);
+            timerid=0;
+            seconds=0;
+            timerDisplay.textContent=formatTime(seconds);
+
+            sessions=[];
+            localStorage.removeItem("sessions");
+            sessionList.innerHTML="";
+            updateTotal();
+        });
+
+        const saved = localStorage.getItem("sessions");
+
+        if(saved!==null){
+            sessions = JSON.parse(saved);
+            
+            for(let i=0;i<sessions.length;i++){
+                const li=document.createElement("li");
+                li.textContent= sessions[i].subject+"-"+formatTime(sessions[i].time);
+                sessionList.appendChild(li);
+            }
+        }
+        updateTotal();
+    </script>
+</body>
+</html>
